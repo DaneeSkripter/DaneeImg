@@ -7,6 +7,8 @@ const upload = multer()
 const mongoose = require("mongoose");
 const Key = require("./models/Key");
 const fs = require('fs');
+const randomstring = require("randomstring");
+
 mongoose.connect(process.env.MONGO_SRV, {
 }).then(() =>[
   console.log("Connected to the database!")
@@ -14,10 +16,14 @@ mongoose.connect(process.env.MONGO_SRV, {
     console.log('Failed connect to the database!')
 })
 
+
+app.use(express.urlencoded({ extended: false }))
+
 app.use(express.static('uploads'))
 
 async function verifyKey(req, res, next) {
     const key = req.body.key;
+    console.log(key)
     const findKey = await Key.findOne({ key: key });
     if (findKey) {
         next();
@@ -26,12 +32,14 @@ async function verifyKey(req, res, next) {
     }
 }
 
-app.post('/upload', verifyKey, upload.single('file'), function (req, res) {
+app.post('/upload', upload.single('file'), verifyKey, function (req, res) {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
       } else {
-        fs.writeFileSync(__dirname + `/uploads/${req.file.filename}`, req.file.buffer)
-        res.send(process.env.DOMAIN + `/${req.file.filename}`)
+        const fileextension = req.file.originalname.split(".")[1]
+        const filename = randomstring.generate(6) + `.${fileextension}`
+        fs.writeFileSync(__dirname + `/uploads/${filename}`, req.file.buffer)
+        res.send(process.env.DOMAIN + `/${filename}`)
       }
 })
 
