@@ -23,7 +23,6 @@ app.use(express.static('uploads'))
 
 async function verifyKey(req, res, next) {
     const key = req.body.key;
-    console.log(key)
     const findKey = await Key.findOne({ key: key });
     if (findKey) {
         next();
